@@ -50,8 +50,8 @@ void loop() {
   }
   Serial.print("   ");
   Serial.print(volts);
-  Serial.print("   ");
-  Serial.println(voltKnob());
+  Serial.print(" volts      voltTarget = ");
+  Serial.println(voltTarget);
   delay(100);
 }
 
