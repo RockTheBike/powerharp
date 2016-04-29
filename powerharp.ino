@@ -1,6 +1,9 @@
+#define SWITCHPIN A2 // hardware pullup resistor
 #define VOLTPIN A1 // MINUSRAIL Voltage Sensor Pin
 #define VOLTCOEFF 13.179  // larger number interprets as lower voltage
 #define VOLTKNOB A4
+#define HIGHVOLT 24 // voltage with knob all the way up
+#define LOWVOLT 10 // voltage with knob all the way down
 #define WATTKNOB A5
 #define OVERSAMPLES 25
 #define AVG_CYCLES 10 // average measured values over this many samples
@@ -14,6 +17,8 @@ const int pins[NUM_PINS] = {
 int voltsAdc = 0;
 float voltsAdcAvg = 0;
 float volts = 0;
+float voltTarget = 0;
+byte harpBits = 0;
 
 void setup() {
   for (int i=0; i < NUM_PINS; i++) {
@@ -27,16 +32,14 @@ void setup() {
 
 void loop() {
   getVolts();
-  if (volts > 10) {
-    digitalWrite(REDLEDS,LOW);
-    digitalWrite(GREENLEDS,HIGH);
-  } else {
-    digitalWrite(REDLEDS,HIGH);
-    digitalWrite(GREENLEDS,LOW);
+  if (digitalRead(SWITCHPIN)) { // switch is open
+    voltTarget = voltKnob();
+    harpBits = wattKnob();
+  } else { // switch is closed
+    voltTarget = 24;
+    harpBits = 1;
   }
-  unsigned long analogAdder = 0;
-  for (int j=0; j<OVERSAMPLES; j++) analogAdder += analogRead(WATTKNOB);
-  byte harpBits = analogAdder / OVERSAMPLES / 16;
+  doPedalometer();
   for (int i=0; i < NUM_PINS; i++) {
     digitalWrite(pins[i],harpBits & (1 << i));
     if (harpBits & (1 << i)) {
@@ -45,8 +48,10 @@ void loop() {
       Serial.print(' ');
     }
   }
-  Serial.print('   ');
-  Serial.println(volts);
+  Serial.print("   ");
+  Serial.print(volts);
+  Serial.print("   ");
+  Serial.println(voltKnob());
   delay(100);
 }
 
@@ -64,4 +69,24 @@ float average(float val, float avg){
 
 float adc2volts(float adc){
   return adc * (1 / VOLTCOEFF);
+}
+
+float voltKnob() {
+  return (float)analogRead(VOLTKNOB) / 1023.0 * (float)(HIGHVOLT - LOWVOLT) + LOWVOLT;
+}
+
+byte wattKnob() {
+  unsigned long analogAdder = 0;
+  for (int j=0; j<OVERSAMPLES; j++) analogAdder += analogRead(WATTKNOB);
+  return analogAdder / OVERSAMPLES / 16;
+}
+
+void doPedalometer() {
+  if (volts > voltTarget) { // if volts is higher than target
+    digitalWrite(REDLEDS,LOW);
+    digitalWrite(GREENLEDS,HIGH); // green lights on
+  } else {                 // if volts is higher than knob setting
+    digitalWrite(REDLEDS,HIGH); // red lights on
+    digitalWrite(GREENLEDS,LOW);
+  }
 }
