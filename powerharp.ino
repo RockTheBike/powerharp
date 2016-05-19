@@ -37,7 +37,7 @@ void loop() {
     harpBits = wattKnob();
   } else { // switch is closed
     voltTarget = 24;
-    harpBits = 1;
+    harpBits = 0;
   }
   doPedalometer();
   for (int i=0; i < NUM_PINS; i++) {
