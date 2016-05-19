@@ -1,4 +1,5 @@
-#define SWITCHPIN A2 // hardware pullup resistor
+#define YELLOWSWITCH A2 // hardware pullup resistor
+#define GREENSWITCH A3 // hardware pullup resistor
 #define VOLTPIN A1 // MINUSRAIL Voltage Sensor Pin
 #define VOLTCOEFF 13.179  // larger number interprets as lower voltage
 #define VOLTKNOB A4
@@ -32,10 +33,10 @@ void setup() {
 
 void loop() {
   getVolts();
-  if (digitalRead(SWITCHPIN)) { // switch is open
+  if (digitalRead(YELLOWSWITCH) || digitalRead(GREENSWITCH)) { // if either switch is open
     voltTarget = voltKnob();
     harpBits = wattKnob();
-  } else { // switch is closed
+  } else { // if both switches are closed
     voltTarget = 24;
     harpBits = 0;
   }
@@ -48,6 +49,8 @@ void loop() {
       Serial.print(' ');
     }
   }
+  if (!digitalRead(YELLOWSWITCH)) Serial.print("YELLOW ");
+  if (!digitalRead(GREENSWITCH)) Serial.print("GREEN ");
   Serial.print("   ");
   Serial.print(volts);
   Serial.print(" volts      voltTarget = ");
